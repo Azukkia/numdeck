@@ -16,6 +16,13 @@ const updater = require('./updater');
 const SMOKE_MODE = process.argv.includes('--smoke');
 const ASSETS = path.join(__dirname, '..', '..', 'assets');
 
+// Sur certains profils Windows aux permissions modifiées, le processus GPU
+// sandboxé de Chromium se voit refuser la lecture des fichiers de l'app
+// (erreur 0xC0000022 en boucle puis « GPU process isn't usable ») et l'app
+// se ferme quelques secondes après le lancement. On désactive uniquement le
+// sandbox GPU ; celui des renderers reste actif.
+app.commandLine.appendSwitch('disable-gpu-sandbox');
+
 let mainWindow = null;
 let tray = null;
 let isQuitting = false;
