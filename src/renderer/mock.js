@@ -46,7 +46,7 @@ if (!window.numdeck) {
       startMinimized: false,
       osdEnabled: true,
       deckActiveOnStart: false,
-      overlay: { enabled: true, locked: false, x: null, y: null },
+      overlay: { enabled: true, locked: false, x: null, y: null, scale: 1 },
     },
   };
 
@@ -66,8 +66,16 @@ if (!window.numdeck) {
     getState: async () => ({ config, deckActive, obsStatus: 'connected', hookAvailable: true, ticker: mockTicker(), version: '1.1.0 (aperçu)' }),
     overlaySet: async (patch) => {
       config.settings.overlay = { ...config.settings.overlay, ...patch };
-      fire('overlay:state', { enabled: !!config.settings.overlay.enabled, locked: !!config.settings.overlay.locked });
+      fire('overlay:state', {
+        enabled: !!config.settings.overlay.enabled,
+        locked: !!config.settings.overlay.locked,
+        scale: config.settings.overlay.scale,
+      });
       return config.settings.overlay;
+    },
+    overlayInteractive: () => {},
+    overlayScale: (s, commit) => {
+      if (commit) config.settings.overlay.scale = s;
     },
     saveConfig: async (c) => c,
     activatePreset: async (id) => {

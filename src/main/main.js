@@ -357,6 +357,14 @@ function registerIpc() {
     return config.get().settings.overlay;
   });
 
+  ipcMain.on('overlay:interactive', (_e, interactive) => {
+    overlay.setInteractive(!!interactive);
+  });
+
+  ipcMain.on('overlay:scale', (_e, { scale, commit }) => {
+    if (typeof scale === 'number') overlay.setScale(scale, !!commit);
+  });
+
   ipcMain.handle('preset:activate', (_e, presetId) => {
     const preset = config.setActivePreset(presetId);
     sendToWindow('preset:changed', { presetId: preset.id, name: preset.name });

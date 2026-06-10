@@ -1,6 +1,6 @@
 {
   "name": "numdeck",
-  "version": "1.2.3",
+  "version": "1.3.0",
   "description": "Transformez votre pavé numérique en Stream Deck personnalisable",
   "main": "src/main/main.js",
   "author": "NumDeck",

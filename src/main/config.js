@@ -42,7 +42,7 @@ function defaultConfig() {
       startMinimized: false,
       osdEnabled: true,
       deckActiveOnStart: false,
-      overlay: { enabled: true, locked: false, x: null, y: null },
+      overlay: { enabled: true, locked: false, x: null, y: null, scale: 1 },
     },
   };
 }

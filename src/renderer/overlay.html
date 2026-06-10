@@ -68,7 +68,35 @@
     }
     .head-btn:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
     .head-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 1.8; stroke-linecap: round; }
-    body.locked .head-btn { display: none; }
+
+    /* verrouillé : seul le cadenas reste (semi-transparent, cliquable au survol) */
+    body.locked #btn-hide { display: none; }
+    body.locked .head { -webkit-app-region: no-drag; border-bottom-color: transparent; }
+    body.locked #btn-lock { opacity: 0.45; color: #fbbf24; }
+    body.locked #btn-lock:hover { opacity: 1; background: rgba(251, 191, 36, 0.18); }
+
+    /* poignée de redimensionnement (coin bas-droit) */
+    #grip {
+      position: absolute;
+      right: 7px;
+      bottom: 7px;
+      width: 16px;
+      height: 16px;
+      cursor: nwse-resize;
+      -webkit-app-region: no-drag;
+      opacity: 0.35;
+      z-index: 10;
+    }
+    #grip:hover { opacity: 0.9; }
+    #grip::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, transparent 46%, #8a90a6 46%, #8a90a6 54%, transparent 54%),
+        linear-gradient(135deg, transparent 66%, #8a90a6 66%, #8a90a6 74%, transparent 74%);
+    }
+    body.locked #grip { display: none; }
 
     /* ---- mini deck ---- */
     .grid {
@@ -133,8 +161,9 @@
     <div class="head">
       <span class="dot" id="dot"></span>
       <span class="preset-name" id="preset-name">NumDeck</span>
-      <button class="head-btn" id="btn-lock" title="Verrouiller (les clics traverseront — déverrouillage via l'icône NumDeck de la zone de notification)">
-        <svg viewBox="0 0 16 16"><rect x="3.5" y="7" width="9" height="6.5" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
+      <button class="head-btn" id="btn-lock" title="Verrouiller (les clics traverseront — re-cliquez le cadenas pour déverrouiller)">
+        <svg id="lock-open" viewBox="0 0 16 16"><rect x="3.5" y="7" width="9" height="6.5" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0"/></svg>
+        <svg id="lock-closed" viewBox="0 0 16 16" style="display:none"><rect x="3.5" y="7" width="9" height="6.5" rx="1.6"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>
       </button>
       <button class="head-btn" id="btn-hide" title="Masquer l'overlay (réactivable depuis NumDeck)">
         <svg viewBox="0 0 16 16"><line x1="4" y1="4" x2="12" y2="12"/><line x1="12" y1="4" x2="4" y2="12"/></svg>
@@ -142,6 +171,7 @@
     </div>
     <div class="grid" id="grid"></div>
   </div>
+  <div id="grip" title="Redimensionner l'overlay"></div>
   <script src="mock.js"></script>
   <script src="overlay.js"></script>
 </body>

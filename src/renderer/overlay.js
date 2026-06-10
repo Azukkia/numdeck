@@ -24,6 +24,24 @@ const LAYOUT = [
 
 let cfg = null;
 let lastTicker = null;
+let locked = false;
+let scale = 1;
+let hoverInteractive = false;
+
+const BASE_W = 196;
+
+function applyLockUI() {
+  document.body.classList.toggle('locked', locked);
+  document.getElementById('lock-open').style.display = locked ? 'none' : '';
+  document.getElementById('lock-closed').style.display = locked ? '' : 'none';
+  document.getElementById('btn-lock').title = locked
+    ? 'Déverrouiller l\'overlay'
+    : 'Verrouiller (les clics traverseront — re-cliquez le cadenas pour déverrouiller)';
+}
+
+function applyScaleUI() {
+  document.body.style.zoom = scale;
+}
 
 function activePreset() {
   return cfg.presets.find((p) => p.id === cfg.activePresetId) || cfg.presets[0];
@@ -99,12 +117,63 @@ async function boot() {
   const state = await api.getState();
   cfg = state.config;
   lastTicker = state.ticker;
+  locked = !!cfg.settings.overlay.locked;
+  scale = typeof cfg.settings.overlay.scale === 'number' ? cfg.settings.overlay.scale : 1;
   document.body.classList.toggle('deck-on', state.deckActive);
-  document.body.classList.toggle('locked', !!cfg.settings.overlay.locked);
+  applyLockUI();
+  applyScaleUI();
   render();
 
-  document.getElementById('btn-lock').addEventListener('click', () => api.overlaySet({ locked: true }));
+  document.getElementById('btn-lock').addEventListener('click', () => {
+    api.overlaySet({ locked: !locked });
+  });
   document.getElementById('btn-hide').addEventListener('click', () => api.overlaySet({ enabled: false }));
+
+  // Verrouillé : la fenêtre laisse passer les clics, mais on détecte le survol
+  // du cadenas pour le rendre cliquable le temps du survol
+  document.addEventListener('mousemove', (e) => {
+    if (!locked) return;
+    const over = !!(e.target && e.target.closest && e.target.closest('#btn-lock'));
+    if (over !== hoverInteractive) {
+      hoverInteractive = over;
+      api.overlayInteractive(over);
+    }
+  });
+  document.addEventListener('mouseleave', () => {
+    if (locked && hoverInteractive) {
+      hoverInteractive = false;
+      api.overlayInteractive(false);
+    }
+  });
+
+  // Poignée de redimensionnement (coin bas-droit)
+  const grip = document.getElementById('grip');
+  let resizing = null;
+  let lastSent = 0;
+  grip.addEventListener('pointerdown', (e) => {
+    if (locked) return;
+    grip.setPointerCapture(e.pointerId);
+    resizing = { startX: e.screenX, startScale: scale };
+    e.preventDefault();
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!resizing) return;
+    const delta = (e.screenX - resizing.startX) / BASE_W;
+    scale = Math.min(1.8, Math.max(0.7, resizing.startScale + delta));
+    applyScaleUI();
+    const now = Date.now();
+    if (now - lastSent > 33) {
+      lastSent = now;
+      api.overlayScale(scale, false);
+    }
+  });
+  const endResize = () => {
+    if (!resizing) return;
+    resizing = null;
+    api.overlayScale(scale, true);
+  };
+  grip.addEventListener('pointerup', endResize);
+  grip.addEventListener('pointercancel', endResize);
 
   api.on('deck:changed', ({ active }) => document.body.classList.toggle('deck-on', active));
   api.on('preset:changed', ({ presetId }) => {
@@ -113,10 +182,19 @@ async function boot() {
   });
   api.on('config:changed', (next) => {
     cfg = next;
-    document.body.classList.toggle('locked', !!cfg.settings.overlay.locked);
+    locked = !!cfg.settings.overlay.locked;
+    applyLockUI();
     render();
   });
-  api.on('overlay:state', ({ locked }) => document.body.classList.toggle('locked', !!locked));
+  api.on('overlay:state', (s) => {
+    locked = !!s.locked;
+    if (typeof s.scale === 'number') {
+      scale = s.scale;
+      applyScaleUI();
+    }
+    if (!locked && hoverInteractive) hoverInteractive = false;
+    applyLockUI();
+  });
   api.on('ticker:data', (t) => {
     lastTicker = t;
     refreshDisplays();
