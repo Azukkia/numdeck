@@ -3,6 +3,7 @@
 const { app, BrowserWindow, Tray, Menu, ipcMain, dialog, nativeImage } = require('electron');
 const path = require('path');
 const os = require('os');
+const fs = require('fs');
 const { spawn } = require('child_process');
 
 const config = require('./config');
@@ -22,6 +23,37 @@ const ASSETS = path.join(__dirname, '..', '..', 'assets');
 // se ferme quelques secondes après le lancement. On désactive uniquement le
 // sandbox GPU ; celui des renderers reste actif.
 app.commandLine.appendSwitch('disable-gpu-sandbox');
+
+// --- Résilience aux crashs de processus enfants -----------------------------
+// Certains logiciels (anticheats de jeux comme Riot Vanguard, antivirus…)
+// tuent les processus de rendu des applications à hooks clavier globaux.
+// On journalise la cause et on recharge la fenêtre au lieu de rester noir.
+
+function logCrash(line) {
+  try {
+    fs.appendFileSync(
+      path.join(app.getPath('userData'), 'crash.log'),
+      `[${new Date().toISOString()}] ${line}\n`
+    );
+  } catch (_) { /* le journal ne doit jamais faire planter l'app */ }
+}
+
+let reloadBudget = 6; // recharges max par fenêtre de 5 minutes
+setInterval(() => { reloadBudget = 6; }, 5 * 60 * 1000).unref();
+
+app.on('render-process-gone', (_e, contents, details) => {
+  logCrash(`renderer mort : raison=${details.reason} code=${details.exitCode} url=${contents.getURL()}`);
+  if (details.reason === 'clean-exit' || details.reason === 'killed') return;
+  if (reloadBudget <= 0) return;
+  reloadBudget--;
+  setTimeout(() => {
+    if (!contents.isDestroyed()) contents.reload();
+  }, 1200);
+});
+
+app.on('child-process-gone', (_e, details) => {
+  logCrash(`processus ${details.type} mort : raison=${details.reason} code=${details.exitCode}`);
+});
 
 let mainWindow = null;
 let tray = null;
