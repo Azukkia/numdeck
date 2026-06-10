@@ -1,0 +1,64 @@
+{
+  "name": "numdeck",
+  "version": "1.2.0",
+  "description": "Transformez votre pavé numérique en Stream Deck personnalisable",
+  "main": "src/main/main.js",
+  "author": "NumDeck",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron . --smoke",
+    "dist": "electron-builder --win",
+    "release": "electron-builder --win --publish always",
+    "pack": "electron-builder --dir"
+  },
+  "build": {
+    "appId": "com.numdeck.app",
+    "productName": "NumDeck",
+    "npmRebuild": false,
+    "publish": {
+      "provider": "github",
+      "owner": "Azukkia",
+      "repo": "numdeck"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "assets/**/*",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/uiohook-napi/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "NumDeck",
+      "artifactName": "NumDeck-Setup-${version}.${ext}"
+    }
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.9",
+    "obs-websocket-js": "^5.0.6",
+    "uiohook-napi": "^1.5.5"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
