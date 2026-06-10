@@ -41,9 +41,29 @@ function logCrash(line) {
 let reloadBudget = 6; // recharges max par fenêtre de 5 minutes
 setInterval(() => { reloadBudget = 6; }, 5 * 60 * 1000).unref();
 
+// Codes de l'éditeur de liens Windows : le processus n'a même pas pu démarrer
+// (0xC0000135 DLL introuvable, 0xC0000022 accès refusé). Sur les profils aux
+// ACL modifiées, le sandbox des renderers est inutilisable : on relance
+// automatiquement l'app sans sandbox (contextIsolation reste actif, et l'app
+// ne charge que du contenu local).
+const LOADER_FAILURE_CODES = new Set([-1073741515, -1073741790]);
+const sandboxDisabled = process.argv.includes('--no-sandbox');
+let loaderFailures = 0;
+
 app.on('render-process-gone', (_e, contents, details) => {
   logCrash(`renderer mort : raison=${details.reason} code=${details.exitCode} url=${contents.getURL()}`);
   if (details.reason === 'clean-exit' || details.reason === 'killed') return;
+
+  if (!sandboxDisabled && LOADER_FAILURE_CODES.has(details.exitCode) && !contents.getURL()) {
+    loaderFailures++;
+    if (loaderFailures >= 2) {
+      logCrash('renderers incapables de démarrer (sandbox bloqué sur ce profil) → relance en mode --no-sandbox');
+      app.relaunch({ args: process.argv.slice(1).concat(['--no-sandbox']) });
+      app.exit(0);
+      return;
+    }
+  }
+
   if (reloadBudget <= 0) return;
   reloadBudget--;
   setTimeout(() => {
