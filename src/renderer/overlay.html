@@ -75,28 +75,24 @@
     body.locked #btn-lock { opacity: 0.45; color: #fbbf24; }
     body.locked #btn-lock:hover { opacity: 1; background: rgba(251, 191, 36, 0.18); }
 
-    /* poignée de redimensionnement (coin bas-droit) */
-    #grip {
+    /* poignées de redimensionnement (les 4 coins, coin opposé fixe) */
+    .grip {
       position: absolute;
-      right: 7px;
-      bottom: 7px;
-      width: 16px;
-      height: 16px;
-      cursor: nwse-resize;
-      -webkit-app-region: no-drag;
-      opacity: 0.35;
+      width: 13px;
+      height: 13px;
       z-index: 10;
+      -webkit-app-region: no-drag;
+      opacity: 0.3;
+      border-color: #8a90a6;
+      border-style: solid;
+      border-width: 0;
     }
-    #grip:hover { opacity: 0.9; }
-    #grip::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(135deg, transparent 46%, #8a90a6 46%, #8a90a6 54%, transparent 54%),
-        linear-gradient(135deg, transparent 66%, #8a90a6 66%, #8a90a6 74%, transparent 74%);
-    }
-    body.locked #grip { display: none; }
+    .grip:hover { opacity: 1; border-color: #cdd3e3; }
+    .grip-nw { top: 2px; left: 2px; cursor: nwse-resize; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 8px; }
+    .grip-ne { top: 2px; right: 2px; cursor: nesw-resize; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 8px; }
+    .grip-sw { bottom: 2px; left: 2px; cursor: nesw-resize; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 8px; }
+    .grip-se { bottom: 2px; right: 2px; cursor: nwse-resize; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 8px; }
+    body.locked .grip { display: none; }
 
     /* ---- mini deck ---- */
     .grid {
@@ -171,7 +167,10 @@
     </div>
     <div class="grid" id="grid"></div>
   </div>
-  <div id="grip" title="Redimensionner l'overlay"></div>
+  <div class="grip grip-nw" data-corner="nw" title="Redimensionner"></div>
+  <div class="grip grip-ne" data-corner="ne" title="Redimensionner"></div>
+  <div class="grip grip-sw" data-corner="sw" title="Redimensionner"></div>
+  <div class="grip grip-se" data-corner="se" title="Redimensionner"></div>
   <script src="mock.js"></script>
   <script src="overlay.js"></script>
 </body>

@@ -55,7 +55,7 @@ contextBridge.exposeInMainWorld('numdeck', {
   windowControl: (op) => ipcRenderer.send('window:control', op),
   overlaySet: (patch) => ipcRenderer.invoke('overlay:set', patch),
   overlayInteractive: (interactive) => ipcRenderer.send('overlay:interactive', interactive),
-  overlayScale: (scale, commit) => ipcRenderer.send('overlay:scale', { scale, commit }),
+  overlayScale: (scale, commit, corner) => ipcRenderer.send('overlay:scale', { scale, commit, corner }),
 
   // Mises à jour
   updateCheck: () => ipcRenderer.invoke('update:check'),

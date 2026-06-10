@@ -146,34 +146,47 @@ async function boot() {
     }
   });
 
-  // Poignée de redimensionnement (coin bas-droit)
-  const grip = document.getElementById('grip');
+  // Poignées de redimensionnement : 4 coins, le coin opposé reste fixe.
+  // Tirer vers l'extérieur agrandit, vers l'intérieur réduit.
+  const DELTA_FOR_CORNER = {
+    se: (dx, dy) => Math.abs(dx) > Math.abs(dy) ? dx : dy,
+    sw: (dx, dy) => Math.abs(dx) > Math.abs(dy) ? -dx : dy,
+    ne: (dx, dy) => Math.abs(dx) > Math.abs(dy) ? dx : -dy,
+    nw: (dx, dy) => Math.abs(dx) > Math.abs(dy) ? -dx : -dy,
+  };
+
   let resizing = null;
   let lastSent = 0;
-  grip.addEventListener('pointerdown', (e) => {
-    if (locked) return;
-    grip.setPointerCapture(e.pointerId);
-    resizing = { startX: e.screenX, startScale: scale };
-    e.preventDefault();
-  });
-  grip.addEventListener('pointermove', (e) => {
-    if (!resizing) return;
-    const delta = (e.screenX - resizing.startX) / BASE_W;
-    scale = Math.min(1.8, Math.max(0.7, resizing.startScale + delta));
-    applyScaleUI();
-    const now = Date.now();
-    if (now - lastSent > 33) {
-      lastSent = now;
-      api.overlayScale(scale, false);
-    }
-  });
-  const endResize = () => {
-    if (!resizing) return;
-    resizing = null;
-    api.overlayScale(scale, true);
-  };
-  grip.addEventListener('pointerup', endResize);
-  grip.addEventListener('pointercancel', endResize);
+  for (const grip of document.querySelectorAll('.grip')) {
+    const corner = grip.dataset.corner;
+    grip.addEventListener('pointerdown', (e) => {
+      if (locked) return;
+      grip.setPointerCapture(e.pointerId);
+      resizing = { startX: e.screenX, startY: e.screenY, startScale: scale, corner };
+      e.preventDefault();
+    });
+    grip.addEventListener('pointermove', (e) => {
+      if (!resizing) return;
+      const dx = e.screenX - resizing.startX;
+      const dy = e.screenY - resizing.startY;
+      const delta = DELTA_FOR_CORNER[resizing.corner](dx, dy) / BASE_W;
+      scale = Math.min(1.8, Math.max(0.7, resizing.startScale + delta));
+      applyScaleUI();
+      const now = Date.now();
+      if (now - lastSent > 33) {
+        lastSent = now;
+        api.overlayScale(scale, false, resizing.corner);
+      }
+    });
+    const endResize = () => {
+      if (!resizing) return;
+      const c = resizing.corner;
+      resizing = null;
+      api.overlayScale(scale, true, c);
+    };
+    grip.addEventListener('pointerup', endResize);
+    grip.addEventListener('pointercancel', endResize);
+  }
 
   api.on('deck:changed', ({ active }) => document.body.classList.toggle('deck-on', active));
   api.on('preset:changed', ({ presetId }) => {

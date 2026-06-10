@@ -148,12 +148,17 @@ function setInteractive(interactive) {
   }
 }
 
-// Redimensionnement par la poignée (échelle 0.7 → 1.8)
-function setScale(scale, commit) {
+// Redimensionnement par les poignées de coin (échelle 0.7 → 1.8).
+// Le coin opposé au coin tiré reste fixe.
+function setScale(scale, commit, corner) {
   if (!win || win.isDestroyed()) return;
   const s = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale));
-  const [x, y] = win.getPosition();
+  const b = win.getBounds();
   const { width, height } = sizeFor(s);
+  let x = b.x;
+  let y = b.y;
+  if (corner === 'sw' || corner === 'nw') x = b.x + b.width - width;   // bord droit fixe
+  if (corner === 'ne' || corner === 'nw') y = b.y + b.height - height; // bord bas fixe
   win.setBounds(clampBounds({ x, y, width, height }));
   if (commit) {
     const cfg = config.get();

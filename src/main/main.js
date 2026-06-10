@@ -361,8 +361,8 @@ function registerIpc() {
     overlay.setInteractive(!!interactive);
   });
 
-  ipcMain.on('overlay:scale', (_e, { scale, commit }) => {
-    if (typeof scale === 'number') overlay.setScale(scale, !!commit);
+  ipcMain.on('overlay:scale', (_e, { scale, commit, corner }) => {
+    if (typeof scale === 'number') overlay.setScale(scale, !!commit, corner);
   });
 
   ipcMain.handle('preset:activate', (_e, presetId) => {
